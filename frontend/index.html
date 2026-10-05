@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problema del Agente Viajero (TSP) | Algoritmo de Fuerza Bruta</title>
+  
+  <!-- Tipografía Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Vis.js Network CDN para visualización del mapa de ciudades -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+  <!-- Estilos Personalizados Temáticos -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Barra de Navegación Superior -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="brand-icon">🚚</div>
+      <div>
+        <h1 class="brand-title">Problema del Agente Viajero (TSP)</h1>
+        <div class="brand-subtitle">Optimización y Búsqueda Exhaustiva de Rutas</div>
+      </div>
+    </div>
+
+    <!-- Selector de Métrica de Ponderación -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">Ponderación:</span>
+      <div class="metric-selector">
+        <button class="metric-btn active" data-unit="km" id="btn-unit-km">📏 Distancia (km)</button>
+        <button class="metric-btn" data-unit="$" id="btn-unit-cost">💰 Costo ($)</button>
+        <button class="metric-btn" data-unit="min" id="btn-unit-time">⏱️ Tiempo (min)</button>
+      </div>
+    </div>
+
+    <div class="nav-badges">
+      <button id="btn-open-guide" class="btn btn-secondary btn-sm" style="border-radius: 9999px;">
+        📚 ¿Qué es el TSP?
+      </button>
+      <span class="badge badge-traveler">Fuerza Bruta Estricta</span>
+      <span class="badge badge-emerald">n ∈ [5, 10] Ciudades</span>
+    </div>
+  </header>
+
+  <!-- Barra Guiada de Etapas del Problema -->
+  <nav class="stages-bar">
+    <div class="stage-step active" id="stage-indicator-1">
+      <span class="stage-number">1</span>
+      <span>Configuración de Ciudades</span>
+    </div>
+    <span class="stage-arrow">→</span>
+    <div class="stage-step" id="stage-indicator-2">
+      <span class="stage-number">2</span>
+      <span>Validación Hamiltoniana</span>
+    </div>
+    <span class="stage-arrow">→</span>
+    <div class="stage-step" id="stage-indicator-3">
+      <span class="stage-number">3</span>
+      <span>Matriz de Costos y Exploración</span>
+    </div>
+    <span class="stage-arrow">→</span>
+    <div class="stage-step" id="stage-indicator-4">
+      <span class="stage-number">4</span>
+      <span>Ciclo Óptimo del Agente</span>
+    </div>
+  </nav>
+
+  <!-- Contenedor Principal de la Aplicación -->
+  <main class="app-container">
+
+    <!-- COLUMNA IZQUIERDA: Panel del Agente Viajero -->
+    <aside class="sidebar">
+
+      <!-- Panel de Configuración de Ciudades y Rutas -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">📍 Mapa de Ciudades</h2>
+          <span class="badge" id="mode-badge">Etapa 1: Definición</span>
+        </div>
+
+        <!-- Selector de Nodos n -->
+        <div class="form-group">
+          <div class="form-label">
+            <span>Cantidad de ciudades (n):</span>
+            <span class="value-pill" id="n-nodes-display">5 ciudades</span>
+          </div>
+          <div class="slider-container">
+            <input type="range" id="n-nodes-slider" min="5" max="10" value="5" step="1">
+          </div>
+          <small style="color: var(--text-dim); font-size: 0.75rem;">Restricción estricta: entre 5 y 10 nodos (ciudades).</small>
+        </div>
+
+        <!-- Selector de Modo: Aleatorio / Manual -->
+        <div class="tabs">
+          <button id="tab-random" class="tab-btn active">🎲 Mapa Aleatorio</button>
+          <button id="tab-manual" class="tab-btn">✍️ Conexiones Manuales</button>
+        </div>
+
+        <!-- MODO ALEATORIO -->
+        <div id="content-random" class="tab-content active">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <div class="form-label">
+              <span>Densidad de carreteras extras</span>
+              <span class="value-pill" id="prob-display">55%</span>
+            </div>
+            <input type="range" id="edge-prob-slider" min="20" max="90" value="55" step="5" oninput="document.getElementById('prob-display').textContent = this.value + '%'">
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label" style="font-size:0.75rem;">Valor Mínimo (<span class="unit-label">km</span>)</label>
+              <input type="number" id="min-weight-input" value="10" min="1" max="100">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:0.75rem;">Valor Máximo (<span class="unit-label">km</span>)</label>
+              <input type="number" id="max-weight-input" value="95" min="5" max="500">
+            </div>
+          </div>
+
+          <button id="btn-generate-random" class="btn btn-secondary btn-block">
+            🔄 Generar Nuevo Mapa de Ciudades
+          </button>
+        </div>
+
+        <!-- MODO MANUAL -->
+        <div id="content-manual" class="tab-content">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="form-label">Conectar Ciudades:</label>
+            <div class="edge-creator">
+              <select id="manual-source-select" title="Ciudad origen"></select>
+              <select id="manual-target-select" title="Ciudad destino"></select>
+              <input type="number" id="manual-weight-input" placeholder="Valor" min="1" max="999" value="25" title="Distancia, Costo o Tiempo">
+              <button id="btn-add-edge" class="btn btn-primary btn-sm" title="Agregar carretera">➕</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tramos viales definidos:</label>
+            <div id="manual-edges-list" class="edges-table-container">
+              <!-- Elementos añadidos dinámicamente -->
+            </div>
+          </div>
+
+          <button id="btn-validate-graph" class="btn btn-secondary btn-block" style="margin-top: 0.5rem;">
+            ⚡ Validar Existencia de Ciclo Hamiltoniano
+          </button>
+        </div>
+
+        <!-- Botón Principal: Resolver TSP -->
+        <button id="btn-solve-tsp" class="btn btn-emerald btn-block" style="margin-top: 0.5rem; padding: 0.9rem; font-size: 0.95rem;">
+          🚀 Calcular Rutas del Agente (Fuerza Bruta)
+        </button>
+
+      </section>
+
+      <!-- Mensajes de Alerta / Errores Estructurados con Sugerencias -->
+      <div id="alert-container" class="alert-box alert-warning" style="display: none;"></div>
+
+      <!-- Resumen Estadístico del Agente -->
+      <section class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">📊 Diagnóstico de Rutas</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Permutaciones (n-1)!</div>
+            <div id="stat-total-perms" style="font-size:1.35rem; font-weight:800; font-family:monospace; color:var(--accent-traveler);">—</div>
+          </div>
+          <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Ciclos Válidos</div>
+            <div id="stat-valid-cycles" style="font-size:1.35rem; font-weight:800; font-family:monospace; color:var(--accent-primary);">—</div>
+          </div>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.08); padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid rgba(16, 185, 129, 0.3); text-align: center;">
+          <div style="font-size:0.75rem; text-transform:uppercase; color:var(--accent-emerald); font-weight:700;">
+            🏆 Ruta Óptima del Agente
+          </div>
+          <div id="stat-optimal-cost" style="font-size:2rem; font-weight:900; font-family:monospace; color:var(--accent-emerald);">—</div>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- COLUMNA DERECHA: Lienzo de Navegación, Stepper, Matriz y Resultados -->
+    <div class="workspace">
+
+      <!-- Lienzo del Mapa del Agente Viajero -->
+      <section class="graph-canvas-container">
+        <div id="network-canvas"></div>
+        
+        <div class="canvas-header-info">
+          <span class="traveler-avatar">🚚 Red de Ciudades del Agente Viajero</span>
+          <span style="font-size: 0.72rem; color: var(--text-dim);">Ciudad A es la sede inicial fija; el agente debe recorrer todas y regresar a A</span>
+        </div>
+
+        <div class="canvas-legend">
+          <div class="legend-item">
+            <div class="legend-line" style="background: rgba(148, 163, 184, 0.4);"></div>
+            <span>Carretera existente</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #38bdf8;"></div>
+            <span>Ruta en evaluación</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #10b981; box-shadow: 0 0 8px #10b981;"></div>
+            <span>Ruta Óptima Ganadora</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- MÓDULO DE EJECUCIÓN INTERACTIVA (PASO A PASO) -->
+      <section id="stepper-panel" class="stepper-panel" style="display: none;">
+        <div class="stepper-header">
+          <div>
+            <h2 class="panel-title" style="font-size: 1.1rem;">
+              <span>🎬 Exploración Paso a Paso del Agente Viajero</span>
+            </h2>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+              Evaluación exhaustiva tramo por tramo mediante el algoritmo de Fuerza Bruta
+            </div>
+          </div>
+
+          <!-- Controles de Navegación -->
+          <div class="stepper-controls">
+            <button id="btn-step-start" class="btn btn-secondary btn-sm" title="Ir a la primera permutación">⏮</button>
+            <button id="btn-step-prev" class="btn btn-secondary btn-sm" title="Paso anterior">◀ Ant</button>
+            <button id="btn-step-play" class="btn btn-primary btn-sm" style="min-width: 95px;">▶ Reproducir</button>
+            <button id="btn-step-next" class="btn btn-secondary btn-sm" title="Siguiente paso">Sig ▶</button>
+            <button id="btn-step-end" class="btn btn-secondary btn-sm" title="Ir al final">⏭</button>
+          </div>
+
+          <!-- Velocidad y Filtro -->
+          <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <div class="speed-control">
+              <span>Velocidad:</span>
+              <input type="range" id="speed-slider" min="100" max="1500" value="600" step="50" style="width: 80px;">
+              <span id="speed-display" style="font-family: monospace;">600ms</span>
+            </div>
+
+            <div>
+              <select id="step-filter-select" style="padding: 0.35rem 0.5rem; font-size: 0.75rem;">
+                <option value="all">Todas las permutaciones evaluadas</option>
+                <option value="valid_only">Solo ciclos hamiltonianos válidos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Progreso del Stepper -->
+        <div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+            <span id="step-counter-text">Paso 0 de 0</span>
+            <span>Mejor ruta hasta el momento: <strong id="step-record-cost" style="color:var(--accent-emerald); font-family:monospace;">—</strong></span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+
+        <!-- Tarjeta Informativa del Viaje Actual del Agente -->
+        <div class="current-step-card">
+          <div class="step-route-display">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:700;">
+                Itinerario del Agente:
+              </span>
+              <div id="step-status-badge"></div>
+            </div>
+            <div id="current-route-tokens" class="route-tokens">
+              <!-- Nodos de la ruta tokens -->
+            </div>
+            <div class="cost-calculation-details" id="current-cost-formula">
+              <!-- Desglose de sumas -->
+            </div>
+          </div>
+
+          <div id="current-cost-box" class="cost-box">
+            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:600;" id="current-cost-title">
+              Costo Total Acumulado
+            </div>
+            <div id="current-cost-value" class="cost-value">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN DOBLE: Matriz de Costos y Resultados Finales -->
+      <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 1.5rem;">
+        
+        <!-- Matriz de Costos / Adyacencia -->
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">🔢 Matriz de Costos / Distancias</h2>
+          </div>
+          <div class="matrix-container">
+            <table id="matrix-table" class="matrix-table">
+              <!-- Contenido dinámico -->
+            </table>
+          </div>
+          <small style="color:var(--text-dim); font-size:0.75rem;">
+            * Matriz simétrica del grafo no dirigido. Diagonal en 0 y carreteras con su valor ponderado en <span class="unit-label">km</span>.
+          </small>
+        </section>
+
+        <!-- Tabla Resumen de Ciclos Hamiltonianos -->
+        <section id="results-panel" class="panel" style="display: none;">
+          <div class="panel-header">
+            <h2 class="panel-title">🏆 Soluciones del Agente Viajero</h2>
+            <span class="badge badge-emerald">Ordenados por Menor Costo</span>
+          </div>
+          <div class="results-table-container">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">Pos</th>
+                  <th>Ruta Completa del Agente</th>
+                  <th style="width: 100px;">Costo (<span class="unit-label">km</span>)</th>
+                  <th style="width: 120px;">Diagnóstico</th>
+                </tr>
+              </thead>
+              <tbody id="results-table-body">
+                <!-- Filas renderizadas dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+          <small style="color:var(--text-dim); font-size:0.75rem;">
+            💡 Haz clic en cualquier ruta de la lista para proyectarla y resaltarla directamente sobre el mapa de ciudades.
+          </small>
+        </section>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal Explicativo: ¿Qué es el Problema del Agente Viajero? -->
+  <div id="guide-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🗺️ El Problema del Agente Viajero (TSP)</span>
+        </h3>
+        <button id="btn-close-guide" style="background:transparent; border:none; color:var(--text-muted); font-size:1.3rem; cursor:pointer;">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.85rem; font-size: 0.88rem; color: #cbd5e1; line-height: 1.6;">
+        <p>
+          El <strong>Problema del Agente Viajero (Traveling Salesperson Problem - TSP)</strong> es uno de los desafíos algorítmicos más estudiados en computación e investigación de operaciones.
+        </p>
+        <p>
+          <strong>El Reto:</strong> Dado un conjunto de <strong style="color:var(--accent-traveler);">n</strong> ciudades y las distancias/costos que las conectan, el agente viajero debe encontrar el recorrido más corto posible que:
+        </p>
+        <ul style="padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+          <li>Salga de una ciudad base (por ejemplo, la <strong>Ciudad A</strong>).</li>
+          <li>Visite <strong>todas las demás ciudades exactamente una sola vez</strong> (Ciclo Hamiltoniano).</li>
+          <li>Regrese a la ciudad de inicio.</li>
+          <li>Tenga el <strong>costo o distancia total mínima</strong>.</li>
+        </ul>
+        <p>
+          <strong>Algoritmo de Fuerza Bruta:</strong> Para garantizar la solución exacta sin atajos heurísticos, el algoritmo evalúa sistemáticamente todas las <strong style="color:var(--accent-traveler);">(n − 1)!</strong> permutaciones de visita posibles, calcula la suma de los tramos de cada una y selecciona la que minimiza el recorrido.
+        </p>
+      </div>
+      <button id="btn-modal-understood" class="btn btn-primary" style="align-self: flex-end;">
+        Entendido
+      </button>
+    </div>
+  </div>
+
+  <!-- Script Principal de la Aplicación -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

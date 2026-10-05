@@ -1,0 +1,68 @@
+# CONTEXTO DEL PROYECTO
+Desarrollar una aplicación web interactiva (Backend en Python, Frontend en HTML/CSS/JS) para resolver y visualizar el Problema del Agente Viajero (TSP) utilizando estrictamente el algoritmo de Fuerza Bruta.
+
+# STACK TECNOLÓGICO
+* Backend: Python (Se recomienda Flask o FastAPI para exponer endpoints ligeros).
+* Frontend: HTML puro, CSS y JavaScript (Se recomienda usar librerías como Vis.js, D3.js o Cytoscape.js para renderizar los grafos en el canvas/SVG).
+* Comunicación: Fetch API (REST) para enviar/recibir los datos del grafo y las permutaciones.
+
+# REGLAS ESTRICTAS (CONSTRAINTS)
+1. El número de nodos (n) debe estar estrictamente en el rango n ∈ [5, 10].
+2. El grafo debe ser NO DIRIGIDO y PONDERADO (las aristas tienen costo/distancia/tiempo).
+3. El algoritmo de resolución DEBE SER Fuerza Bruta (evaluar todas las permutaciones posibles). No usar heurísticas ni optimizaciones.
+4. La UI debe ser interactiva: no puede resolver el problema de un solo golpe sin ofrecer la opción de ver el paso a paso.
+
+# FUNCIONALIDADES REQUERIDAS (FEATURES)
+
+## 1. Módulo de Entrada (Input - Frontend)
+* Formulario HTML para ingresar el número de nodos (n).
+* Selector de modo de generación: "Manual" o "Aleatorio".
+* Si es Aleatorio: El backend genera aristas y pesos garantizando un grafo conexo.
+* Si es Manual: Interfaz gráfica/tabla para que el usuario ingrese las conexiones y pesos.
+
+## 2. Módulo de Validación (Backend)
+* Lógica en Python para verificar si el grafo actual permite al menos un Ciclo Hamiltoniano.
+* Si no lo permite, el backend devuelve un error estructurado y el frontend muestra: "Faltan las siguientes aristas para completar un ciclo válido: [Lista de aristas sugeridas]".
+
+## 3. Módulo de Visualización (Frontend)
+* Dibujar el grafo en pantalla dinámicamente.
+* Los nodos deben estar etiquetados (ej. A, B, C o 1, 2, 3).
+* Las aristas deben mostrar claramente su peso.
+* Generar y mostrar en pantalla la Matriz de Costos (Matriz de Adyacencia).
+
+## 4. Módulo de Ejecución Interactiva (Paso a Paso)
+* Botón "Siguiente Paso" en el Frontend.
+* El Backend debe calcular las permutaciones (rutas posibles) y enviarlas al Frontend, o el Frontend solicita una por una.
+* Mostrar en pantalla la ruta actual evaluada y la suma acumulada de su costo.
+
+## 5. Módulo de Resultados (Output Final)
+* Tabla resumen con: Número total de ciclos hamiltonianos y el costo total de cada uno.
+* Identificar visualmente el Ciclo Óptimo (el de menor costo).
+* Resaltar esta ruta ganadora (cambio de color/grosor) directamente sobre el grafo dibujado.
+
+# PLAN DE DESARROLLO PASO A PASO (INSTRUCCIONES PARA EL AGENTE)
+El agente debe desarrollar el proyecto siguiendo estrictamente este orden:
+
+* PASO 1: SETUP Y ESTRUCTURA BASE
+  - Crear la estructura de carpetas (Backend/Frontend).
+  - Inicializar el servidor Python (Flask/FastAPI) con un endpoint de prueba.
+  - Crear el archivo `index.html` con la estructura básica del UI.
+
+* PASO 2: LÓGICA DE GRAFOS EN PYTHON (BACKEND)
+  - Programar la generación de grafos aleatorios y la recepción de grafos manuales.
+  - Implementar la validación matemática de ciclos hamiltonianos y sugerencia de aristas faltantes.
+  - Crear el endpoint que devuelva la estructura del grafo al frontend.
+
+* PASO 3: RENDERIZADO VISUAL EN EL FRONTEND
+  - Conectar el HTML con el endpoint de generación.
+  - Implementar la librería de renderizado (ej. Vis.js) para dibujar nodos, aristas y pesos basados en los datos del JSON recibido.
+  - Mostrar la Matriz de Costos en una tabla HTML.
+
+* PASO 4: ALGORITMO DE FUERZA BRUTA Y CONTROLADOR DE ESTADO
+  - Implementar el algoritmo de fuerza bruta en Python que genere todas las rutas y calcule sus costos.
+  - Crear el mecanismo (paginación de API o envío completo y control en JS) para que el botón "Siguiente" muestre iterativamente cada ruta y su costo.
+
+* PASO 5: RESULTADOS Y PULIDO VISUAL
+  - Programar la vista final del resumen de ciclos evaluados.
+  - Implementar la lógica en el Frontend para actualizar el color/grosor del grafo y resaltar la ruta óptima.
+  - Pruebas finales de manejo de errores (n fuera de rango [5,10], datos inválidos).
