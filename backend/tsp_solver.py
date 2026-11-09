@@ -38,6 +38,10 @@ def solve_tsp_brute_force(
 
     steps_sample: List[Dict[str, Any]] = []
 
+    # Conjunto para deduplicar ciclos por su firma de aristas (grafo no dirigido:
+    # A→B→C→A y A→C→B→A son el mismo ciclo recorrido en sentido contrario)
+    seen_cycle_signatures: set = set()
+
     # Fuerza bruta estricta: itertools.permutations genera todas las ordenaciones de los n-1 nodos
     perm_index = 0
     for perm in itertools.permutations(other_nodes):
@@ -86,18 +90,27 @@ def solve_tsp_brute_force(
         }
 
         if is_valid:
-            cycle_info = {
-                "index": perm_index,
-                "route": route,
-                "formatted_route": " → ".join(route),
-                "total_cost": accumulated_cost,
-                "edge_breakdown": edge_breakdown
-            }
-            valid_cycles.append(cycle_info)
+            # Firma canónica del ciclo: frozenset de aristas (no dirigidas)
+            # Esto elimina duplicados por reverso: A→B→C→A == A→C→B→A
+            sig = frozenset(
+                tuple(sorted([route[i], route[i + 1]]))
+                for i in range(n)
+            )
 
-            if accumulated_cost < min_cost:
-                min_cost = accumulated_cost
-                optimal_cycle = cycle_info
+            if sig not in seen_cycle_signatures:
+                seen_cycle_signatures.add(sig)
+                cycle_info = {
+                    "index": perm_index,
+                    "route": route,
+                    "formatted_route": " → ".join(route),
+                    "total_cost": accumulated_cost,
+                    "edge_breakdown": edge_breakdown
+                }
+                valid_cycles.append(cycle_info)
+
+                if accumulated_cost < min_cost:
+                    min_cost = accumulated_cost
+                    optimal_cycle = cycle_info
 
         # Guardar en steps_sample hasta el límite configurado para la animación
         if perm_index <= max_steps_to_include:

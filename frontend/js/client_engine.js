@@ -196,6 +196,10 @@ export function solveClientTSP(nodes, edges, maxStepsToInclude = 600) {
   const stepsSample = [];
   let permIndex = 0;
 
+  // Conjunto para deduplicar ciclos por firma de aristas (grafo no dirigido:
+  // A→B→C→A y A→C→B→A son el mismo ciclo recorrido en sentido contrario)
+  const seenCycleSignatures = new Set();
+
   for (const perm of permute(otherNodes)) {
     permIndex++;
     totalPermutations++;
@@ -245,18 +249,29 @@ export function solveClientTSP(nodes, edges, maxStepsToInclude = 600) {
     };
 
     if (isValid) {
-      const cycleInfo = {
-        index: permIndex,
-        route,
-        formatted_route: route.join(" → "),
-        total_cost: accumulatedCost,
-        edge_breakdown: edgeBreakdown
-      };
-      validCycles.push(cycleInfo);
+      // Firma canónica del ciclo: set de aristas no dirigidas (sorted, joined)
+      // Elimina duplicados por reverso: A→B→C→A == A→C→B→A
+      const sigParts = [];
+      for (let i = 0; i < n; i++) {
+        sigParts.push([route[i], route[i + 1]].sort().join("-"));
+      }
+      const sig = sigParts.sort().join("|");
 
-      if (accumulatedCost < minCost) {
-        minCost = accumulatedCost;
-        optimalCycle = cycleInfo;
+      if (!seenCycleSignatures.has(sig)) {
+        seenCycleSignatures.add(sig);
+        const cycleInfo = {
+          index: permIndex,
+          route,
+          formatted_route: route.join(" → "),
+          total_cost: accumulatedCost,
+          edge_breakdown: edgeBreakdown
+        };
+        validCycles.push(cycleInfo);
+
+        if (accumulatedCost < minCost) {
+          minCost = accumulatedCost;
+          optimalCycle = cycleInfo;
+        }
       }
     }
 

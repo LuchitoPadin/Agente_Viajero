@@ -52,12 +52,14 @@ class TestTSPEndpoints(unittest.TestCase):
         data = res.get_json()
         self.assertTrue(data["success"])
         results = data["results"]
-        # (5-1)! = 24 permutaciones
+        # (5-1)! = 24 permutaciones evaluadas (fuerza bruta completa, sin deduplicar pasos)
         self.assertEqual(results["total_permutations"], 24)
         # El ciclo mínimo debe costar 50
         self.assertEqual(results["optimal_cost"], 50)
         self.assertIsNotNone(results["optimal_cycle"])
-        self.assertTrue(len(results["valid_cycles"]) >= 2)
+        # Con deduplicación de reversos: ciclos únicos >= 1 y <= (n-1)!/2 = 12
+        self.assertGreaterEqual(len(results["valid_cycles"]), 1)
+        self.assertLessEqual(len(results["valid_cycles"]), 12)
 
     def test_missing_edges_validation(self):
         nodes = ["A", "B", "C", "D", "E"]
