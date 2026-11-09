@@ -257,9 +257,9 @@ async function generateRandomGraph(n) {
     resetTSPExecution();
     updateStageIndicator(1);
 
-    const minW = document.getElementById("min-weight-input")?.value || 10;
-    const maxW = document.getElementById("max-weight-input")?.value || 95;
-    const prob = (document.getElementById("edge-prob-slider")?.value || 55) / 100;
+    const minW = Math.max(5,  Math.min(50,  Number(document.getElementById("min-weight-input")?.value) || 10));
+    const maxW = Math.max(10, Math.min(150, Number(document.getElementById("max-weight-input")?.value) || 150));
+    const prob = Math.max(0.2, Math.min(0.9, (Number(document.getElementById("edge-prob-slider")?.value) || 55) / 100));
 
     const data = await Api.generateGraph(n, minW, maxW, prob);
     state.nodes = data.nodes;
@@ -317,6 +317,10 @@ function addManualEdge() {
   }
   if (!weight || weight <= 0) {
     showAlert("El valor del tramo vial debe ser un número positivo.", "warning");
+    return;
+  }
+  if (weight < 5 || weight > 150) {
+    showAlert("El valor del tramo debe estar entre 5 y 150 km. Ajusta el valor e intenta nuevamente.", "warning");
     return;
   }
 

@@ -34,10 +34,14 @@ export function buildClientAdjacencyMatrix(nodes, edges) {
   return matrix;
 }
 
-export function generateClientRandomGraph(n, minWeight = 5, maxWeight = 60, extraEdgeProb = 0.55) {
+export function generateClientRandomGraph(n, minWeight = 10, maxWeight = 150, extraEdgeProb = 0.55) {
   if (n < 5 || n > 10) {
     throw new Error("El número de nodos debe estar entre 5 y 10.");
   }
+
+  // Clampar rangos para garantizar valores razonables (5–150 km)
+  minWeight = Math.max(5,  Math.min(50,  Number(minWeight) || 10));
+  maxWeight = Math.max(10, Math.min(150, Number(maxWeight) || 150));
 
   const nodes = getClientNodeLabels(n);
   const edgesSet = new Set();

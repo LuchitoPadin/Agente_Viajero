@@ -71,9 +71,9 @@ def generate_graph_endpoint():
                 "error": "El número de nodos (n) debe estar estrictamente en el rango [5, 10]."
             }), 400
 
-        min_w = int(data.get("min_weight", 5))
-        max_w = int(data.get("max_weight", 50))
-        extra_prob = float(data.get("extra_prob", 0.50))
+        min_w = max(5,  min(50,  int(data.get("min_weight", 10))))
+        max_w = max(10, min(150, int(data.get("max_weight", 150))))
+        extra_prob = max(0.2, min(0.9, float(data.get("extra_prob", 0.55))))
 
         graph_data = generate_random_graph(n, min_weight=min_w, max_weight=max_w, extra_edge_prob=extra_prob)
 
