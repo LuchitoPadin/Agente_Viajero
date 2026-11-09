@@ -27,3 +27,4 @@ print()
 print("Todos los ciclos unicos (ordenados por costo):")
 for c in r['valid_cycles']:
     print(f"  [{c['total_cost']:>4}] {c['formatted_route']}")
+
