@@ -39,3 +39,6 @@ ENV/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Tunnel binaries
+cloudflared.exe
