@@ -1,6 +1,6 @@
 /**
  * Renderizador de Grafos con Vis.js Network
- * Adaptado a la temática del Problema del Agente Viajero (Ciudades, Rutas y Logística)
+ * Adaptado a la estética moderna de TSP Flow (estilo Matetb / HasseFlow)
  */
 
 export class GraphVisualizer {
@@ -12,6 +12,7 @@ export class GraphVisualizer {
     this.unit = "km"; // 'km' | '$' | 'min'
     this.currentEdges = [];
     this.currentNodes = [];
+    this.physicsEnabled = false;
   }
 
   setUnit(unit) {
@@ -39,27 +40,27 @@ export class GraphVisualizer {
         id: nodeId,
         label: isOrigin ? `🏛️ ${cityName}\n(Sede Origen)` : `🏢 ${cityName}`,
         shape: "box",
-        margin: 10,
+        margin: 12,
         font: {
-          color: "#ffffff",
+          color: isOrigin ? "#000000" : "#ffffff",
           size: 14,
           face: "Inter, sans-serif",
           multi: true,
           bold: { mod: "bold" }
         },
         color: {
-          background: isOrigin ? "#0284c7" : "#1e293b",
-          border: isOrigin ? "#38bdf8" : "#475569",
+          background: isOrigin ? "#ffffff" : "#171717",
+          border: isOrigin ? "#ffffff" : "#2a2a2a",
           highlight: {
-            background: "#0369a1",
-            border: "#7dd3fc"
+            background: isOrigin ? "#f4f4f5" : "#262626",
+            border: isOrigin ? "#ffffff" : "#38bdf8"
           }
         },
-        borderWidth: isOrigin ? 2.5 : 1.5,
+        borderWidth: isOrigin ? 2 : 1.5,
         shadow: {
           enabled: true,
-          color: isOrigin ? "rgba(56, 189, 248, 0.45)" : "rgba(0, 0, 0, 0.4)",
-          size: 10,
+          color: isOrigin ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.7)",
+          size: isOrigin ? 16 : 8,
           x: 0,
           y: 2
         }
@@ -75,18 +76,18 @@ export class GraphVisualizer {
         to: edge.target,
         label: this.formatWeight(edge.weight),
         font: {
-          color: "#94a3b8",
+          color: "#a1a1aa",
           size: 13,
-          background: "rgba(10, 14, 23, 0.9)",
+          background: "rgba(9, 9, 11, 0.95)",
           strokeWidth: 0,
           align: "middle"
         },
         color: {
-          color: "rgba(148, 163, 184, 0.35)",
+          color: "rgba(255, 255, 255, 0.18)",
           highlight: "#38bdf8",
-          hover: "#0284c7"
+          hover: "#7dd3fc"
         },
-        width: 2,
+        width: 1.5,
         smooth: {
           enabled: true,
           type: "continuous",
@@ -108,9 +109,9 @@ export class GraphVisualizer {
         enabled: true,
         solver: "forceAtlas2Based",
         forceAtlas2Based: {
-          gravitationalConstant: -80,
-          centralGravity: 0.015,
-          springLength: 130,
+          gravitationalConstant: -75,
+          centralGravity: 0.012,
+          springLength: 140,
           springConstant: 0.08,
           damping: 0.45
         },
@@ -124,7 +125,7 @@ export class GraphVisualizer {
         hover: true,
         zoomView: true,
         dragView: true,
-        navigationButtons: true,
+        navigationButtons: false,
         keyboard: false
       }
     };
@@ -137,6 +138,8 @@ export class GraphVisualizer {
 
     this.network.once("stabilizationIterationsDone", () => {
       this.network.setOptions({ physics: { enabled: false } });
+      this.physicsEnabled = false;
+      this.fit();
     });
   }
 
@@ -154,17 +157,17 @@ export class GraphVisualizer {
     }
 
     let activeEdgeColor = "#38bdf8"; // Cyan viajero
-    let activeEdgeWidth = 4;
+    let activeEdgeWidth = 3.5;
     let nodeBorderColor = "#38bdf8";
 
     if (isOptimal) {
       activeEdgeColor = "#10b981"; // Esmeralda ganador
-      activeEdgeWidth = 5.5;
-      nodeBorderColor = "#34d399";
+      activeEdgeWidth = 5;
+      nodeBorderColor = "#10b981";
     } else if (!isValid) {
       activeEdgeColor = "#f43f5e"; // Ruta rota
       activeEdgeWidth = 3;
-      nodeBorderColor = "#fb7185";
+      nodeBorderColor = "#f43f5e";
     }
 
     const updatedEdges = [];
@@ -176,42 +179,50 @@ export class GraphVisualizer {
           color: { color: activeEdgeColor },
           width: activeEdgeWidth,
           font: {
-            color: isOptimal ? "#6ee7b7" : "#ffffff",
+            color: isOptimal ? "#6ee7b7" : (isValid ? "#38bdf8" : "#fca5a5"),
             size: 14,
-            background: "rgba(10, 14, 23, 0.95)"
+            background: "rgba(9, 9, 11, 0.95)"
           }
         });
       } else {
         updatedEdges.push({
           id: edge.id,
-          color: { color: "rgba(255, 255, 255, 0.07)" },
-          width: 1.5,
+          color: { color: "rgba(255, 255, 255, 0.05)" },
+          width: 1,
           font: {
-            color: "rgba(148, 163, 184, 0.25)",
-            size: 12,
-            background: "rgba(10, 14, 23, 0.4)"
+            color: "rgba(161, 161, 170, 0.2)",
+            size: 11,
+            background: "rgba(9, 9, 11, 0.5)"
           }
         });
       }
     });
 
     const updatedNodes = [];
-    this.nodesDataSet.forEach(node => {
+    this.nodesDataSet.forEach((node, idx) => {
       const isInRoute = routeNodes.includes(node.id);
+      const isOrigin = idx === 0;
+
       if (isInRoute) {
         updatedNodes.push({
           id: node.id,
-          borderWidth: 3,
+          borderWidth: isOptimal ? 3 : 2,
+          color: {
+            border: isOptimal ? "#10b981" : (isValid ? "#38bdf8" : "#f43f5e")
+          },
           shadow: {
             enabled: true,
-            color: isOptimal ? "rgba(16, 185, 129, 0.65)" : "rgba(56, 189, 248, 0.5)",
-            size: 15
+            color: isOptimal ? "rgba(16, 185, 129, 0.7)" : (isValid ? "rgba(56, 189, 248, 0.6)" : "rgba(244, 63, 94, 0.5)"),
+            size: isOptimal ? 22 : 14
           }
         });
       } else {
         updatedNodes.push({
           id: node.id,
           borderWidth: 1,
+          color: {
+            border: "#2a2a2a"
+          },
           shadow: { enabled: false }
         });
       }
@@ -232,15 +243,15 @@ export class GraphVisualizer {
       resetEdges.push({
         id: edge.id,
         color: {
-          color: "rgba(148, 163, 184, 0.35)",
+          color: "rgba(255, 255, 255, 0.18)",
           highlight: "#38bdf8",
-          hover: "#0284c7"
+          hover: "#7dd3fc"
         },
-        width: 2,
+        width: 1.5,
         font: {
-          color: "#94a3b8",
+          color: "#a1a1aa",
           size: 13,
-          background: "rgba(10, 14, 23, 0.9)"
+          background: "rgba(9, 9, 11, 0.95)"
         }
       });
     });
@@ -250,16 +261,50 @@ export class GraphVisualizer {
       const isOrigin = idx === 0;
       resetNodes.push({
         id: node.id,
-        borderWidth: isOrigin ? 2.5 : 1.5,
+        borderWidth: isOrigin ? 2 : 1.5,
+        color: {
+          border: isOrigin ? "#ffffff" : "#2a2a2a"
+        },
         shadow: {
           enabled: true,
-          color: isOrigin ? "rgba(56, 189, 248, 0.4)" : "rgba(0, 0, 0, 0.4)",
-          size: 8
+          color: isOrigin ? "rgba(255, 255, 255, 0.4)" : "rgba(0, 0, 0, 0.7)",
+          size: isOrigin ? 16 : 8
         }
       });
     });
 
     this.edgesDataSet.update(resetEdges);
     this.nodesDataSet.update(resetNodes);
+  }
+
+  fit() {
+    if (this.network) {
+      this.network.fit({
+        animation: { duration: 400, easingFunction: "easeInOutQuad" }
+      });
+    }
+  }
+
+  zoomIn() {
+    if (this.network) {
+      const scale = this.network.getScale();
+      this.network.moveTo({ scale: scale * 1.25, animation: { duration: 250 } });
+    }
+  }
+
+  zoomOut() {
+    if (this.network) {
+      const scale = this.network.getScale();
+      this.network.moveTo({ scale: scale * 0.8, animation: { duration: 250 } });
+    }
+  }
+
+  togglePhysics() {
+    if (this.network) {
+      this.physicsEnabled = !this.physicsEnabled;
+      this.network.setOptions({ physics: { enabled: this.physicsEnabled } });
+      return this.physicsEnabled;
+    }
+    return false;
   }
 }

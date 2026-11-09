@@ -51,6 +51,25 @@ document.addEventListener("DOMContentLoaded", () => {
   setupEventListeners();
   updateStageIndicator(1);
   generateRandomGraph(5);
+
+  function renderMath() {
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(document.body, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false }
+          ],
+          throwOnError: false
+        });
+      } catch (e) {
+        console.warn("KaTeX render error:", e);
+      }
+    }
+  }
+
+  renderMath();
+  window.addEventListener("load", renderMath);
 });
 
 /**
@@ -154,14 +173,48 @@ function setupEventListeners() {
 
   // Modal Guía del Agente Viajero
   const guideModal = document.getElementById("guide-modal");
-  document.getElementById("btn-open-guide").addEventListener("click", () => {
-    guideModal.classList.add("active");
-  });
-  document.getElementById("btn-close-guide").addEventListener("click", () => {
-    guideModal.classList.remove("active");
-  });
-  document.getElementById("btn-modal-understood").addEventListener("click", () => {
-    guideModal.classList.remove("active");
+  const openGuideBtn = document.getElementById("btn-open-guide");
+  if (openGuideBtn) {
+    openGuideBtn.addEventListener("click", () => {
+      guideModal.classList.add("active");
+    });
+  }
+  const closeGuideBtn = document.getElementById("btn-close-guide");
+  if (closeGuideBtn) {
+    closeGuideBtn.addEventListener("click", () => {
+      guideModal.classList.remove("active");
+    });
+  }
+  const understoodBtn = document.getElementById("btn-modal-understood");
+  if (understoodBtn) {
+    understoodBtn.addEventListener("click", () => {
+      guideModal.classList.remove("active");
+    });
+  }
+
+  // Controles de Visualización del Grafo (Toolbar)
+  document.getElementById("btn-graph-fit")?.addEventListener("click", () => visualizer?.fit());
+  document.getElementById("btn-graph-zoom-in")?.addEventListener("click", () => visualizer?.zoomIn());
+  document.getElementById("btn-graph-zoom-out")?.addEventListener("click", () => visualizer?.zoomOut());
+  
+  const btnPhysics = document.getElementById("btn-graph-physics");
+  if (btnPhysics) {
+    btnPhysics.addEventListener("click", () => {
+      const isEnabled = visualizer?.togglePhysics();
+      btnPhysics.textContent = isEnabled ? "⚡ Física: ON" : "⏸️ Física: OFF";
+    });
+  }
+
+  // Botón Hero: Cargar Ejemplo 5 Ciudades
+  document.getElementById("btn-hero-example")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    state.n = 5;
+    const nSlider = document.getElementById("n-nodes-slider");
+    const nDisplay = document.getElementById("n-nodes-display");
+    if (nSlider) nSlider.value = 5;
+    if (nDisplay) nDisplay.textContent = "5 ciudades";
+    generateRandomGraph(5);
+    document.getElementById("programa")?.scrollIntoView({ behavior: "smooth" });
   });
 }
 
